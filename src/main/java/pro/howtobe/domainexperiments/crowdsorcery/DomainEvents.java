@@ -14,7 +14,15 @@ public class DomainEvents {
         return events.contains(projectStarted);
     }
 
-    public static DomainEvents of(ProjectStarted projectStarted) {
+    public static DomainEvents of(ProjectStarted... projectStarted) {
         return new DomainEvents(List.of(projectStarted));
+    }
+
+    public boolean noEventsOccurred() {
+        return events.isEmpty();
+    }
+
+    public static DomainEvents empty() {
+        return of();
     }
 }

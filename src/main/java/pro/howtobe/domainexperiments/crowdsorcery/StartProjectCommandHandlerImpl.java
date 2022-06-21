@@ -4,6 +4,13 @@ public class StartProjectCommandHandlerImpl implements StartProjectCommandHandle
 
     @Override
     public DomainEvents startProjectBy(Borrower borrower) {
-        return DomainEvents.of(new ProjectStarted());
+        if (canAccept(borrower)) {
+            return DomainEvents.of(new ProjectStarted());
+        }
+        return DomainEvents.empty();
+    }
+
+    private boolean canAccept(Borrower borrower) {
+        return borrower.isAdult();
     }
 }
