@@ -1,11 +1,22 @@
 package pro.howtobe.domainexperiments.crowdsorcery;
 
+import lombok.Value;
+import lombok.experimental.Accessors;
+
 import java.time.LocalDate;
 import java.time.Period;
 
-public record Borrower(LocalDate birthDate) {
+@Value
+@Accessors(fluent = true)
+public class Borrower {
 
-    public boolean isAdult(LocalDate now) {
-        return Period.between(birthDate(), now).getYears() > 17;
+    LocalDate birthDate;
+
+    public Borrower(LocalDate birthDate, LocalDate now) throws IllegalArgumentException {
+        var years = Period.between(birthDate, now).getYears();
+        if (years < 18) {
+            throw new IllegalArgumentException("Borrower must be adult, but is %s years old.".formatted(years));
+        }
+        this.birthDate = birthDate;
     }
 }
