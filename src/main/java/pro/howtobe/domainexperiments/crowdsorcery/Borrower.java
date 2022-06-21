@@ -1,8 +1,11 @@
 package pro.howtobe.domainexperiments.crowdsorcery;
 
-public record Borrower(Age age) {
+import java.time.LocalDate;
+import java.time.Period;
 
-    public boolean isAdult() {
-        return age().years() > 17;
+public record Borrower(LocalDate birthDate) {
+
+    public boolean isAdult(LocalDate now) {
+        return Period.between(birthDate(), now).getYears() > 17;
     }
 }

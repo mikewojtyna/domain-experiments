@@ -1,10 +1,15 @@
 package pro.howtobe.domainexperiments.crowdsorcery;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -16,6 +21,16 @@ class ExampleMappingTest {
     class StartingAProject {
 
         private Borrower borrower;
+        private LocalDate currentDate;
+        private StartProjectCommandHandler commandHandler;
+
+        @BeforeEach
+        void setup() {
+            currentDate = LocalDate.EPOCH;
+            commandHandler = new StartProjectCommandHandlerImpl(Clock.fixed(currentDate.atStartOfDay()
+                                                                                       .toInstant(ZoneOffset.UTC),
+                                                                            ZoneOffset.UTC));
+        }
 
         // @formatter:off
         @DisplayName(
@@ -61,7 +76,7 @@ class ExampleMappingTest {
         }
 
         private Borrower borrowerOfAge(int years) {
-            return new Borrower(new Age(years));
+            return new Borrower(currentDate.minusYears(years));
         }
 
         private ProjectStarted anyProjectStartedEvent() {
@@ -69,12 +84,11 @@ class ExampleMappingTest {
         }
 
         private DomainEvents borrowerWantsToStartAProject() {
-            var commandHandler = new StartProjectCommandHandlerImpl();
             return commandHandler.startProjectBy(borrower);
         }
 
         private Borrower anyAdultBorrower() {
-            return new Borrower(new Age(20));
+            return new Borrower(currentDate.minusYears(20));
         }
     }
 }
