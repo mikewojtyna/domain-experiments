@@ -1,4 +1,4 @@
-package pro.howtobe.domainexperiments.crowdsorcery;
+package pro.howtobe.domainexperiments.crowdsorcery.managingproject.domain;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

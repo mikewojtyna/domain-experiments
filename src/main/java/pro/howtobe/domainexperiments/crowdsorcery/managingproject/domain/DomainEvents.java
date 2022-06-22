@@ -1,4 +1,4 @@
-package pro.howtobe.domainexperiments.crowdsorcery;
+package pro.howtobe.domainexperiments.crowdsorcery.managingproject.domain;
 
 import java.util.List;
 
