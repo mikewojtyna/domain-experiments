@@ -1,21 +1,23 @@
 package pro.howtobe.domainexperiments.crowdsorcery.managingproject.domain;
 
+import pro.howtobe.domainexperiments.crowdsorcery.common.domain.DomainEvent;
+
 import java.util.List;
 
 public class DomainEvents {
 
-    private final List<ProjectStarted> events;
+    private final List<DomainEvent> events;
 
-    private DomainEvents(List<ProjectStarted> events) {
+    private DomainEvents(List<DomainEvent> events) {
         this.events = events;
     }
 
-    public boolean hasOccurred(ProjectStarted projectStarted) {
-        return events.contains(projectStarted);
+    public boolean hasOccurred(DomainEvent event) {
+        return events.contains(event);
     }
 
-    public static DomainEvents of(ProjectStarted... projectStarted) {
-        return new DomainEvents(List.of(projectStarted));
+    public static DomainEvents of(DomainEvent... events) {
+        return new DomainEvents(List.of(events));
     }
 
     public boolean noEventsOccurred() {

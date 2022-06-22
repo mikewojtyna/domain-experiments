@@ -1,4 +1,6 @@
 package pro.howtobe.domainexperiments.crowdsorcery.managingproject.domain;
 
-public record ProjectStarted() {
+import pro.howtobe.domainexperiments.crowdsorcery.common.domain.DomainEvent;
+
+public record ProjectStarted() implements DomainEvent {
 }
