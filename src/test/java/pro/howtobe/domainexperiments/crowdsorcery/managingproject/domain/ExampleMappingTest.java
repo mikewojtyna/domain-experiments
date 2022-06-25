@@ -7,7 +7,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import java.time.Clock;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
@@ -68,11 +70,11 @@ class ExampleMappingTest {
         // @formatter:off
         @DisplayName(
             """
-             Only adult borrowers can register their accounts
+             Only adults can register their accounts
             """
         )
         // @formatter:on
-        @ParameterizedTest(name = "given birth date {0} and current date {1}, then this borrower can register her account")
+        @ParameterizedTest(name = "given birth date {0} and current date {1}, then this person can register her account")
         @CsvSource({
             "2004-06-10, 2022-06-10",
             "2003-06-10, 2022-06-10",
@@ -81,17 +83,23 @@ class ExampleMappingTest {
             "1980-06-10, 2022-06-10"
         })
         void canRegisterBorrowerTest(LocalDate birthDate, LocalDate now) {
-            new Borrower(birthDate, now);
+            var clock = Clock.fixed(now.atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
+            CriminalRecord emptyCriminalRecord = emptyCriminalRecord();
+            BorrowerRegistry borrowerRegistry = new CriminalRecordAwareBorrowerRegistry(clock, emptyCriminalRecord);
+            RegistrationForm registrationForm = new RegistrationForm(birthDate, new PersonalId());
+            var result = borrowerRegistry.register(registrationForm);
+            assertThat(result.result()).isNotNull();
+            assertThat(result.events().hasOccurred(new BorrowerRegistered())).isTrue();
         }
 
         // @formatter:off
         @DisplayName(
             """
-             Borrowers younger than 18 years old cannot register their accounts
+             people younger than 18 years old cannot register their accounts
             """
         )
         // @formatter:on
-        @ParameterizedTest(name = "given birth date {0} and current date {1}, then this borrower is not allowed to register her account")
+        @ParameterizedTest(name = "given birth date {0} and current date {1}, then this person is not allowed to register her account")
         @CsvSource({
             "2005-06-10, 2022-06-10",
             "2006-06-10, 2022-06-10",
@@ -99,9 +107,43 @@ class ExampleMappingTest {
             "2022-06-10, 2022-06-10",
             "2022-06-10, 2022-06-10"
         })
-        void borrowerTest(LocalDate birthDate, LocalDate now) {
-            var exception = catchThrowableOfType(() -> new Borrower(birthDate, now), IllegalArgumentException.class);
+        void cannotRegisterBorrowerTest(LocalDate birthDate, LocalDate now) {
+            var clock = Clock.fixed(now.atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
+            CriminalRecord emptyCriminalRecord = emptyCriminalRecord();
+            BorrowerRegistry borrowerRegistry = new CriminalRecordAwareBorrowerRegistry(clock, emptyCriminalRecord);
+            RegistrationForm registrationForm = new RegistrationForm(birthDate, new PersonalId());
+            var exception = catchThrowableOfType(() -> borrowerRegistry.register(registrationForm),
+                                                 IllegalArgumentException.class);
             assertThat(exception).isNotNull();
         }
+
+        // @formatter:off
+        @DisplayName(
+            """
+             person with criminal record cannot register her account
+            """
+        )
+        // @formatter:on
+        @Test
+        void criminalRecordTest() {
+            // given
+            var birthDate = LocalDate.EPOCH;
+            var personalId = new PersonalId();
+            var registerForm = new RegistrationForm(birthDate, personalId);
+            var clock = Clock.fixed(birthDate.plusYears(19).atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
+            var criminalRecord = (CriminalRecord) borrowerId -> true;
+            BorrowerRegistry borrowerRegistry = new CriminalRecordAwareBorrowerRegistry(clock, criminalRecord);
+
+            // when
+            var exception = catchThrowableOfType(() -> borrowerRegistry.register(registerForm),
+                                                 BorrowerRegistryException.class);
+
+            // then
+            assertThat(exception).isNotNull();
+        }
+    }
+
+    private CriminalRecord emptyCriminalRecord() {
+        return personalId -> false;
     }
 }
