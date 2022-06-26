@@ -24,15 +24,12 @@ class ExampleMappingTest {
     class StartingAProject {
 
         private ProjectProposalSupervisor projectProposalSupervisor;
-        private LocalDate now;
-        private Borrower borrower;
         private ProjectProposal projectProposal;
 
         @BeforeEach
         void setup() {
             projectProposalSupervisor = new ProjectProposalSupervisor();
             projectProposal = new ProjectProposal(Money.of(CurrencyUnit.USD, 5000));
-            now = LocalDate.EPOCH;
         }
 
         // @formatter:off
@@ -47,7 +44,6 @@ class ExampleMappingTest {
         @Test
         void startTest() {
             // given
-            borrower = anyBorrower();
 
             // when
             var events = borrowerWantsToStartAProject();
@@ -68,7 +64,6 @@ class ExampleMappingTest {
         @Test
         void verifyProjectTest() {
             // given
-            borrower = anyBorrower();
             projectProposal = projectProposalOfTotalValue(Money.of(CurrencyUnit.USD, 10_000));
 
             // when
@@ -81,14 +76,6 @@ class ExampleMappingTest {
 
         private ProjectProposal projectProposalOfTotalValue(Money totalValue) {
             return new ProjectProposal(totalValue);
-        }
-
-        private Borrower anyBorrower() {
-            var clock = Clock.fixed(now.atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
-            var emptyCriminalRecord = emptyCriminalRecord();
-            var borrowerRegistry = new CriminalRecordAwareBorrowerRegistry(clock, emptyCriminalRecord);
-            var registrationForm = new RegistrationForm(now.minusYears(19), new PersonalId());
-            return borrowerRegistry.register(registrationForm).result();
         }
 
         private DomainEvents borrowerWantsToStartAProject() {
