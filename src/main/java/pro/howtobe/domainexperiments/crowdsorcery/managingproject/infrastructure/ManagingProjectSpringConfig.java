@@ -3,33 +3,24 @@ package pro.howtobe.domainexperiments.crowdsorcery.managingproject.infrastructur
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import pro.howtobe.domainexperiments.crowdsorcery.managingproject.adapters.primary.StartProjectCli;
-import pro.howtobe.domainexperiments.crowdsorcery.managingproject.adapters.secondary.InMemoryBorrowerRepository;
-import pro.howtobe.domainexperiments.crowdsorcery.managingproject.domain.BorrowerRepository;
-import pro.howtobe.domainexperiments.crowdsorcery.managingproject.domain.StartProjectCommandHandler;
-import pro.howtobe.domainexperiments.crowdsorcery.managingproject.domain.StartProjectCommandHandlerImpl;
-import pro.howtobe.domainexperiments.crowdsorcery.managingproject.usecases.StartProject;
+import pro.howtobe.domainexperiments.crowdsorcery.managingproject.domain.ProjectProposalSupervisor;
+import pro.howtobe.domainexperiments.crowdsorcery.managingproject.usecases.StartProjectUseCase;
 
 @Configuration
 public class ManagingProjectSpringConfig {
 
     @Bean
-    public StartProjectCommandHandler startProjectCommandHandler() {
-        return new StartProjectCommandHandlerImpl();
+    public ProjectProposalSupervisor startProjectCommandHandler() {
+        return new ProjectProposalSupervisor();
     }
 
     @Bean
-    public BorrowerRepository borrowerRepository() {
-        return new InMemoryBorrowerRepository();
+    public StartProjectUseCase startProject(ProjectProposalSupervisor startProjectCommandHandler) {
+        return new StartProjectUseCase(startProjectCommandHandler);
     }
 
     @Bean
-    public StartProject startProject(BorrowerRepository borrowerRepository,
-                                     StartProjectCommandHandler startProjectCommandHandler) {
-        return new StartProject(borrowerRepository, startProjectCommandHandler);
-    }
-
-    @Bean
-    public StartProjectCli startProjectCli(StartProject startProject) {
+    public StartProjectCli startProjectCli(StartProjectUseCase startProject) {
         return new StartProjectCli(startProject);
     }
 }

@@ -1,6 +1,7 @@
 package pro.howtobe.domainexperiments.crowdsorcery.managingproject.domain;
 
 import lombok.NonNull;
+import org.joda.money.Money;
 
-public record BorrowerId(@NonNull String value) {
+public record ProjectProposal(@NonNull Money totalValue) {
 }

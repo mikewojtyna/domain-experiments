@@ -4,6 +4,7 @@ import lombok.NonNull;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.UUID;
 
 public class CriminalRecordAwareBorrowerRegistry implements BorrowerRegistry {
 
@@ -19,13 +20,17 @@ public class CriminalRecordAwareBorrowerRegistry implements BorrowerRegistry {
     }
 
     @Override
-    public DomainResult<Borrower> register(RegistrationForm registerForm) throws BorrowerRegistryException {
-        if (criminalRecord.hasCriminalRecord(registerForm.id())) {
+    public DomainResult<Borrower> register(RegistrationForm registrationForm) throws BorrowerRegistryException {
+        if (criminalRecord.hasCriminalRecord(registrationForm.id())) {
             throw new BorrowerRegistryException(
                 "Cannot register borrower based on register form %s. This person has criminal record.".formatted(
-                    registerForm));
+                    registrationForm));
         }
-        return new DomainResult<>(new Borrower(registerForm.birthDate(), LocalDate.now(clock)),
-                                  DomainEvents.of(new BorrowerRegistered()));
+        var borrower = new Borrower(uniqueBorrowerId(), registrationForm.birthDate(), LocalDate.now(clock));
+        return new DomainResult<>(borrower, DomainEvents.of(new BorrowerRegistered()));
+    }
+
+    private BorrowerId uniqueBorrowerId() {
+        return new BorrowerId(UUID.randomUUID().toString());
     }
 }

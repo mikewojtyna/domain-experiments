@@ -1,8 +1,8 @@
 package pro.howtobe.domainexperiments.crowdsorcery.managingproject.domain;
 
-import java.util.Optional;
+import lombok.NonNull;
 
 public interface BorrowerRepository {
 
-    Optional<Borrower> findBy(BorrowerId borrowerId);
+    void save(@NonNull Borrower borrower);
 }

@@ -1,5 +1,7 @@
 package pro.howtobe.domainexperiments.crowdsorcery.managingproject.domain;
 
+import org.joda.money.CurrencyUnit;
+import org.joda.money.Money;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -21,20 +23,24 @@ class ExampleMappingTest {
     @Nested
     class StartingAProject {
 
+        private ProjectProposalSupervisor projectProposalSupervisor;
+        private LocalDate now;
         private Borrower borrower;
-        private StartProjectCommandHandler commandHandler;
+        private ProjectProposal projectProposal;
 
         @BeforeEach
         void setup() {
-            commandHandler = new StartProjectCommandHandlerImpl();
+            projectProposalSupervisor = new ProjectProposalSupervisor();
+            projectProposal = new ProjectProposal(Money.of(CurrencyUnit.USD, 5000));
+            now = LocalDate.EPOCH;
         }
 
         // @formatter:off
         @DisplayName(
             """
-             given borrower,
-             when borrower wants to start a project,
-             then project is started successfully
+             given project proposal of $9000 total value,
+             when borrower wants to start a project based on this proposal,
+             then project is started successfully immediately
             """	
         )
         // @formatter:on
@@ -47,19 +53,46 @@ class ExampleMappingTest {
             var events = borrowerWantsToStartAProject();
 
             // then
-            assertThat(events.hasOccurred(anyProjectStartedEvent())).isTrue();
+            assertThat(events.hasOccurredAnyEventOfType(ProjectStarted.class)).isTrue();
+        }
+
+        // @formatter:off
+        @DisplayName(
+            """
+             given project proposal of $10 000 total value,
+             when borrower wants to start a project based on this proposal,
+             then project needs to be verified first
+            """	
+        )
+        // @formatter:on
+        @Test
+        void verifyProjectTest() {
+            // given
+            borrower = anyBorrower();
+            projectProposal = projectProposalOfTotalValue(Money.of(CurrencyUnit.USD, 10_000));
+
+            // when
+            var events = borrowerWantsToStartAProject();
+
+            // then
+            assertThat(events.size()).isEqualTo(1);
+            assertThat(events.hasOccurredAnyEventOfType(ProjectRequestAcceptedForVerification.class)).isTrue();
+        }
+
+        private ProjectProposal projectProposalOfTotalValue(Money totalValue) {
+            return new ProjectProposal(totalValue);
         }
 
         private Borrower anyBorrower() {
-            return new Borrower(LocalDate.of(2004, 6, 10), LocalDate.of(2022, 6, 10));
-        }
-
-        private ProjectStarted anyProjectStartedEvent() {
-            return new ProjectStarted();
+            var clock = Clock.fixed(now.atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
+            var emptyCriminalRecord = emptyCriminalRecord();
+            var borrowerRegistry = new CriminalRecordAwareBorrowerRegistry(clock, emptyCriminalRecord);
+            var registrationForm = new RegistrationForm(now.minusYears(19), new PersonalId());
+            return borrowerRegistry.register(registrationForm).result();
         }
 
         private DomainEvents borrowerWantsToStartAProject() {
-            return commandHandler.startProjectBy(borrower);
+            return projectProposalSupervisor.startProject(projectProposal);
         }
     }
 
@@ -85,11 +118,12 @@ class ExampleMappingTest {
         void canRegisterBorrowerTest(LocalDate birthDate, LocalDate now) {
             var clock = Clock.fixed(now.atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
             CriminalRecord emptyCriminalRecord = emptyCriminalRecord();
-            BorrowerRegistry borrowerRegistry = new CriminalRecordAwareBorrowerRegistry(clock, emptyCriminalRecord);
+            BorrowerRegistry borrowerRegistry = new CriminalRecordAwareBorrowerRegistry(clock, emptyCriminalRecord
+            );
             RegistrationForm registrationForm = new RegistrationForm(birthDate, new PersonalId());
             var result = borrowerRegistry.register(registrationForm);
             assertThat(result.result()).isNotNull();
-            assertThat(result.events().hasOccurred(new BorrowerRegistered())).isTrue();
+            assertThat(result.events().hasOccurredAnyEventOfType(BorrowerRegistered.class)).isTrue();
         }
 
         // @formatter:off
@@ -110,7 +144,8 @@ class ExampleMappingTest {
         void cannotRegisterBorrowerTest(LocalDate birthDate, LocalDate now) {
             var clock = Clock.fixed(now.atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
             CriminalRecord emptyCriminalRecord = emptyCriminalRecord();
-            BorrowerRegistry borrowerRegistry = new CriminalRecordAwareBorrowerRegistry(clock, emptyCriminalRecord);
+            BorrowerRegistry borrowerRegistry = new CriminalRecordAwareBorrowerRegistry(clock, emptyCriminalRecord
+            );
             RegistrationForm registrationForm = new RegistrationForm(birthDate, new PersonalId());
             var exception = catchThrowableOfType(() -> borrowerRegistry.register(registrationForm),
                                                  IllegalArgumentException.class);
@@ -132,7 +167,8 @@ class ExampleMappingTest {
             var registerForm = new RegistrationForm(birthDate, personalId);
             var clock = Clock.fixed(birthDate.plusYears(19).atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
             var criminalRecord = (CriminalRecord) borrowerId -> true;
-            BorrowerRegistry borrowerRegistry = new CriminalRecordAwareBorrowerRegistry(clock, criminalRecord);
+            BorrowerRegistry borrowerRegistry = new CriminalRecordAwareBorrowerRegistry(clock, criminalRecord
+            );
 
             // when
             var exception = catchThrowableOfType(() -> borrowerRegistry.register(registerForm),

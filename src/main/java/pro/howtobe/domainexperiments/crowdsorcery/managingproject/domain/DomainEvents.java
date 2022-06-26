@@ -16,6 +16,10 @@ public class DomainEvents {
         return events.contains(event);
     }
 
+    public boolean hasOccurredAnyEventOfType(Class<? extends DomainEvent> type) {
+        return events.stream().anyMatch(type::isInstance);
+    }
+
     public static DomainEvents of(DomainEvent... events) {
         return new DomainEvents(List.of(events));
     }
@@ -26,5 +30,9 @@ public class DomainEvents {
 
     public static DomainEvents empty() {
         return of();
+    }
+
+    public int size() {
+        return events.size();
     }
 }
