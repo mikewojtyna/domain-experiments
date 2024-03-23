@@ -13,9 +13,9 @@ class FundraisingExamplesTest {
     // @formatter:off
     @DisplayName(
         """
-         given fundraising has started,
-         when investment is made,
-         then project is funded
+         given fundraising of project with fundraising goal of $10000 has started,
+         when investments of $1000, $5000 and $4000 are made,
+         then project is funded and funds are released to the borrower
         """
     )
     // @formatter:on
@@ -23,13 +23,19 @@ class FundraisingExamplesTest {
     void projectIsFundedTest() {
         // given
         var fundraisingSystem = new SomeSystemIDontKnowHowToNameYet();
-        var amount = Money.zero(CurrencyUnit.USD);
+        var oneThousandUSD = Money.of(CurrencyUnit.USD, 1000);
+        var fiveThousandUSD = Money.of(CurrencyUnit.USD, 5000);
+        var fourThousandUSD = Money.of(CurrencyUnit.USD, 4000);
         var fundraisingHasStarted = fundraisingSystem.startFundraising();
 
         // when
-        var projectIsFunded = fundraisingSystem.invest(amount);
+        var eventAfterInvestOneThousandUsd = fundraisingSystem.invest(oneThousandUSD);
+        var eventAfterInvestFiveThousandUsd = fundraisingSystem.invest(fiveThousandUSD);
+        var eventAfterInvestFourThousandUsd = fundraisingSystem.invest(fourThousandUSD);
 
         // then
-        assertThat(projectIsFunded).isNotNull();
+        assertThat(eventAfterInvestOneThousandUsd).isNull();
+        assertThat(eventAfterInvestFiveThousandUsd).isNull();
+        assertThat(eventAfterInvestFourThousandUsd).isNotNull();
     }
 }
