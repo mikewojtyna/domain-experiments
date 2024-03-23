@@ -1,5 +1,7 @@
 package pro.howtobe.domainexperiments.crowdsorcery.fundraising;
 
+import org.joda.money.CurrencyUnit;
+import org.joda.money.Money;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,17 +13,21 @@ class FundraisingExamplesTest {
     // @formatter:off
     @DisplayName(
         """
-         project is funded
+         given fundraising has started,
+         when investment is made,
+         then project is funded
         """
     )
     // @formatter:on
     @Test
     void projectIsFundedTest() {
         // given
-        var someSystemIDontKnowHowToNameYet = new SomeSystemIDontKnowHowToNameYet();
+        var fundraisingSystem = new SomeSystemIDontKnowHowToNameYet();
+        var amount = Money.zero(CurrencyUnit.USD);
+        var fundraisingHasStarted = fundraisingSystem.startFundraising();
 
         // when
-        var projectIsFunded = someSystemIDontKnowHowToNameYet.fundProject();
+        var projectIsFunded = fundraisingSystem.invest(amount);
 
         // then
         assertThat(projectIsFunded).isNotNull();
