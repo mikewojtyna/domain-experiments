@@ -15,27 +15,51 @@ class FundraisingExamplesTest {
         """
          given fundraising of project with fundraising goal of $10000 has started,
          when investments of $1000, $5000 and $4000 are made,
-         then project is funded and funds are released to the borrower
+         then project is funded
         """
     )
     // @formatter:on
     @Test
     void projectIsFundedTest() {
         // given
-        var fundraisingSystem = new SomeSystemIDontKnowHowToNameYet();
+        var fundraisingSystem = new FundraisingSystem();
         var oneThousandUSD = Money.of(CurrencyUnit.USD, 1000);
         var fiveThousandUSD = Money.of(CurrencyUnit.USD, 5000);
         var fourThousandUSD = Money.of(CurrencyUnit.USD, 4000);
-        var fundraisingHasStarted = fundraisingSystem.startFundraising();
+        var fundraisingGoal = new FundraisingGoal(Money.of(CurrencyUnit.USD, 10_000));
+        fundraisingSystem.startFundraising(fundraisingGoal);
 
         // when
-        var eventAfterInvestOneThousandUsd = fundraisingSystem.invest(oneThousandUSD);
-        var eventAfterInvestFiveThousandUsd = fundraisingSystem.invest(fiveThousandUSD);
-        var eventAfterInvestFourThousandUsd = fundraisingSystem.invest(fourThousandUSD);
+        var eventsAfterInvestOneThousandUsd = fundraisingSystem.invest(oneThousandUSD);
+        var eventsAfterInvestFiveThousandUsd = fundraisingSystem.invest(fiveThousandUSD);
+        var eventsAfterInvestFourThousandUsd = fundraisingSystem.invest(fourThousandUSD);
 
         // then
-        assertThat(eventAfterInvestOneThousandUsd).isNull();
-        assertThat(eventAfterInvestFiveThousandUsd).isNull();
-        assertThat(eventAfterInvestFourThousandUsd).isNotNull();
+        assertThat(eventsAfterInvestOneThousandUsd.events()).hasSize(2)
+                                                            .satisfiesExactly(
+                                                                event -> assertThat(event).isInstanceOf(
+                                                                    FundraisingEvent.FundraisingHasStarted.class),
+                                                                event -> assertThat(event).isInstanceOf(
+                                                                    FundraisingEvent.InvestmentMade.class));
+        assertThat(eventsAfterInvestFiveThousandUsd.events()).hasSize(3)
+                                                             .satisfiesExactly(
+                                                                 event -> assertThat(event).isInstanceOf(
+                                                                     FundraisingEvent.FundraisingHasStarted.class),
+                                                                 event -> assertThat(event).isInstanceOf(
+                                                                     FundraisingEvent.InvestmentMade.class),
+                                                                 event -> assertThat(event).isInstanceOf(
+                                                                     FundraisingEvent.InvestmentMade.class));
+        assertThat(eventsAfterInvestFourThousandUsd.events()).hasSize(5)
+                                                             .satisfiesExactly(
+                                                                 event -> assertThat(event).isInstanceOf(
+                                                                     FundraisingEvent.FundraisingHasStarted.class),
+                                                                 firstEvent -> assertThat(firstEvent).isInstanceOf(
+                                                                     FundraisingEvent.InvestmentMade.class),
+                                                                 secondEvent -> assertThat(secondEvent).isInstanceOf(
+                                                                     FundraisingEvent.InvestmentMade.class),
+                                                                 thirdEvent -> assertThat(thirdEvent).isInstanceOf(
+                                                                     FundraisingEvent.InvestmentMade.class),
+                                                                 fourthEvent -> assertThat(fourthEvent).isInstanceOf(
+                                                                     FundraisingEvent.ProjectIsFunded.class));
     }
 }

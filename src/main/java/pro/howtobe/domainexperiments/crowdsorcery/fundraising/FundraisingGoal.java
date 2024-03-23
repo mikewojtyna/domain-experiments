@@ -1,4 +1,4 @@
 package pro.howtobe.domainexperiments.crowdsorcery.fundraising;
 
-public record FundraisingHasStarted() {
+public record FundraisingGoal(org.joda.money.Money money) {
 }
