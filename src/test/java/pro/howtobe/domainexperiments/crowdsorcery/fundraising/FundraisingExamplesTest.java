@@ -27,7 +27,9 @@ class FundraisingExamplesTest {
         var fiveThousandUSD = Money.of(CurrencyUnit.USD, 5000);
         var fourThousandUSD = Money.of(CurrencyUnit.USD, 4000);
         var fundraisingGoal = new FundraisingGoal(Money.of(CurrencyUnit.USD, 10_000));
-        fundraisingSystem.startFundraising(fundraisingGoal, Personas.borrowerNamed("George"));
+        fundraisingSystem.startFundraising(new ProjectProposal(fundraisingGoal,
+                                                               Personas.borrowerNamed("George"),
+                                                               false));
 
         // when
         var eventsAfterInvestOneThousandUsd = fundraisingSystem.invest(oneThousandUSD);
@@ -82,5 +84,132 @@ class FundraisingExamplesTest {
 
         // then
         assertThat(fundsReleased.toBorrower()).isEqualTo(projectFunded.borrower());
+    }
+
+    @DisplayName(
+        """
+        Given fundraising of project with fundraising goal of $10000 has started,
+        When investments of $1000, $5000, $4000 and $2000 are made,
+        Then the project is funded (but we don't know what should happen with the excessive investment!)
+        """
+    )
+    @Test
+    void overInvestedTest() {
+        // given
+        var fundraisingSystem = new FundraisingSystem();
+        var oneThousandUSD = Money.of(CurrencyUnit.USD, 1000);
+        var fiveThousandUSD = Money.of(CurrencyUnit.USD, 5000);
+        var fourThousandUSD = Money.of(CurrencyUnit.USD, 4000);
+        var fundraisingGoal = new FundraisingGoal(Money.of(CurrencyUnit.USD, 10_000));
+        var twoThousandUSD = Money.of(CurrencyUnit.USD, 2000);
+        fundraisingSystem.startFundraising(new ProjectProposal(fundraisingGoal,
+                                                               Personas.borrowerNamed("George"),
+                                                               false));
+
+        // when
+        fundraisingSystem.invest(oneThousandUSD);
+        fundraisingSystem.invest(fiveThousandUSD);
+        fundraisingSystem.invest(fourThousandUSD);
+        var eventsAfterOverInvesting = fundraisingSystem.invest(twoThousandUSD);
+
+        // then
+        assertThat(eventsAfterOverInvesting.events()).hasSize(6)
+                                                     .satisfiesExactly(
+                                                         event -> assertThat(event).isInstanceOf(
+                                                             FundraisingEvent.FundraisingHasStarted.class),
+                                                         event -> assertThat(event).isInstanceOf(
+                                                             FundraisingEvent.InvestmentMade.class),
+                                                         event -> assertThat(event).isInstanceOf(
+                                                             FundraisingEvent.InvestmentMade.class),
+                                                         event -> assertThat(event).isInstanceOf(
+                                                             FundraisingEvent.InvestmentMade.class),
+                                                         event -> assertThat(event).isInstanceOf(
+                                                             FundraisingEvent.ProjectFunded.class),
+                                                         // TODO: explore what should happen now
+                                                         event -> assertThat(event));
+    }
+
+    @DisplayName(
+        """
+        Given fundraising of project with fundraising goal of $10000 has started,
+        When investments of $1000, $5000, $4000 and $2000 are made,
+        Then project is funded, but excessive investment is rejected by default
+        """
+    )
+    @Test
+    void overInvestedTest2() {
+        // given
+        var fundraisingSystem = new FundraisingSystem();
+        var oneThousandUSD = Money.of(CurrencyUnit.USD, 1000);
+        var fiveThousandUSD = Money.of(CurrencyUnit.USD, 5000);
+        var fourThousandUSD = Money.of(CurrencyUnit.USD, 4000);
+        var fundraisingGoal = new FundraisingGoal(Money.of(CurrencyUnit.USD, 10_000));
+        var twoThousandUSD = Money.of(CurrencyUnit.USD, 2000);
+        fundraisingSystem.startFundraising(new ProjectProposal(fundraisingGoal, Personas.borrowerNamed("John"), false));
+
+        // when
+        fundraisingSystem.invest(oneThousandUSD);
+        fundraisingSystem.invest(fiveThousandUSD);
+        fundraisingSystem.invest(fourThousandUSD);
+        var eventsAfterOverInvesting = fundraisingSystem.invest(twoThousandUSD);
+
+        // then
+        assertThat(eventsAfterOverInvesting.events()).hasSize(6)
+                                                     .satisfiesExactly(
+                                                         event -> assertThat(event).isInstanceOf(
+                                                             FundraisingEvent.FundraisingHasStarted.class),
+                                                         event -> assertThat(event).isInstanceOf(
+                                                             FundraisingEvent.InvestmentMade.class),
+                                                         event -> assertThat(event).isInstanceOf(
+                                                             FundraisingEvent.InvestmentMade.class),
+                                                         event -> assertThat(event).isInstanceOf(
+                                                             FundraisingEvent.InvestmentMade.class),
+                                                         event -> assertThat(event).isInstanceOf(
+                                                             FundraisingEvent.ProjectFunded.class),
+                                                         // TODO: should we always reject?
+                                                         event -> assertThat(event).isInstanceOf(FundraisingEvent.InvestmentRejected.class));
+    }
+
+    @DisplayName(
+        """
+        Given fundraising of project with fundraising goal of $10000 and defined stretch goals has started,
+        When investments of $1000, $5000, $4000 and $2000 are made,
+        Then project is funded and nothing specials happens (yet)
+        """
+    )
+    @Test
+    void overInvestedTest3() {
+        // given
+        var fundraisingSystem = new FundraisingSystem();
+        var oneThousandUSD = Money.of(CurrencyUnit.USD, 1000);
+        var fiveThousandUSD = Money.of(CurrencyUnit.USD, 5000);
+        var fourThousandUSD = Money.of(CurrencyUnit.USD, 4000);
+        var twoThousandUSD = Money.of(CurrencyUnit.USD, 2000);
+        boolean hasStretchGoals = true;
+        ProjectProposal projectProposal = new ProjectProposal(new FundraisingGoal(Money.of(CurrencyUnit.USD, 10_000)),
+                                                              Personas.borrowerNamed("John"),
+                                                              hasStretchGoals);
+        fundraisingSystem.startFundraising(projectProposal);
+
+        // when
+        fundraisingSystem.invest(oneThousandUSD);
+        fundraisingSystem.invest(fiveThousandUSD);
+        fundraisingSystem.invest(fourThousandUSD);
+        var eventsAfterOverInvesting = fundraisingSystem.invest(twoThousandUSD);
+
+        // then
+        assertThat(eventsAfterOverInvesting.events()).hasSize(6)
+                                                     .satisfiesExactly(
+                                                         event -> assertThat(event).isInstanceOf(
+                                                             FundraisingEvent.FundraisingHasStarted.class),
+                                                         event -> assertThat(event).isInstanceOf(
+                                                             FundraisingEvent.InvestmentMade.class),
+                                                         event -> assertThat(event).isInstanceOf(
+                                                             FundraisingEvent.InvestmentMade.class),
+                                                         event -> assertThat(event).isInstanceOf(
+                                                             FundraisingEvent.InvestmentMade.class),
+                                                         event -> assertThat(event).isInstanceOf(
+                                                             FundraisingEvent.ProjectFunded.class),
+                                                         event -> assertThat(event).isInstanceOf(FundraisingEvent.InvestmentMade.class));
     }
 }

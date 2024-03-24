@@ -9,15 +9,23 @@ import java.util.List;
 
 public class FundraisingSystem {
 
-    private List<FundraisingEvent> events = new ArrayList<>(List.of());
+    private final List<FundraisingEvent> events = new ArrayList<>(List.of());
     private FundraisingGoal goal;
     private Borrower borrower;
+    private boolean funded;
+    private boolean hasStretchGoals;
 
     public DomainEvents<FundraisingEvent> invest(Money amount) {
         if (events.stream().findFirst().stream().anyMatch(FundraisingEvent.FundraisingHasStarted.class::isInstance)) {
-            events.add(new FundraisingEvent.InvestmentMade(amount));
-            if (goalIsReached()) {
-                events.add(new FundraisingEvent.ProjectFunded(borrower));
+            if (goalIsReached() && !hasStretchGoals) {
+                events.add(new FundraisingEvent.InvestmentRejected());
+            }
+            else {
+                events.add(new FundraisingEvent.InvestmentMade(amount));
+                if (!funded && goalIsReached()) {
+                    events.add(new FundraisingEvent.ProjectFunded(borrower));
+                    funded = true;
+                }
             }
         }
         else {
@@ -35,10 +43,11 @@ public class FundraisingSystem {
                       .isLessThan(goal.money());
     }
 
-    public DomainEvents<FundraisingEvent> startFundraising(FundraisingGoal goal, Borrower borrower) {
+    public DomainEvents<FundraisingEvent> startFundraising(ProjectProposal projectProposal) {
         events.add(new FundraisingEvent.FundraisingHasStarted());
-        this.goal = goal;
-        this.borrower = borrower;
+        this.goal = projectProposal.goal();
+        this.borrower = projectProposal.borrower();
+        this.hasStretchGoals = projectProposal.hasStretchGoals();
         return new DomainEvents<>(events);
     }
 }
