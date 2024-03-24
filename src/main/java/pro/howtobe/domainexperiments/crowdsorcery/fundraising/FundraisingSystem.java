@@ -2,6 +2,7 @@ package pro.howtobe.domainexperiments.crowdsorcery.fundraising;
 
 import org.joda.money.CurrencyUnit;
 import org.joda.money.Money;
+import pro.howtobe.domainexperiments.crowdsorcery.managingproject.domain.Borrower;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,12 +11,13 @@ public class FundraisingSystem {
 
     private List<FundraisingEvent> events = new ArrayList<>(List.of());
     private FundraisingGoal goal;
+    private Borrower borrower;
 
     public DomainEvents<FundraisingEvent> invest(Money amount) {
         if (events.stream().findFirst().stream().anyMatch(FundraisingEvent.FundraisingHasStarted.class::isInstance)) {
             events.add(new FundraisingEvent.InvestmentMade(amount));
             if (goalIsReached()) {
-                events.add(new FundraisingEvent.ProjectIsFunded());
+                events.add(new FundraisingEvent.ProjectFunded(borrower));
             }
         }
         else {
@@ -33,9 +35,10 @@ public class FundraisingSystem {
                       .isLessThan(goal.money());
     }
 
-    public DomainEvents<FundraisingEvent> startFundraising(FundraisingGoal goal) {
+    public DomainEvents<FundraisingEvent> startFundraising(FundraisingGoal goal, Borrower borrower) {
         events.add(new FundraisingEvent.FundraisingHasStarted());
         this.goal = goal;
+        this.borrower = borrower;
         return new DomainEvents<>(events);
     }
 }

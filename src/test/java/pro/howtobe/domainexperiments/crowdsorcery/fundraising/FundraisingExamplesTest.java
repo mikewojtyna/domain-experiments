@@ -27,7 +27,7 @@ class FundraisingExamplesTest {
         var fiveThousandUSD = Money.of(CurrencyUnit.USD, 5000);
         var fourThousandUSD = Money.of(CurrencyUnit.USD, 4000);
         var fundraisingGoal = new FundraisingGoal(Money.of(CurrencyUnit.USD, 10_000));
-        fundraisingSystem.startFundraising(fundraisingGoal);
+        fundraisingSystem.startFundraising(fundraisingGoal, Personas.borrowerNamed("George"));
 
         // when
         var eventsAfterInvestOneThousandUsd = fundraisingSystem.invest(oneThousandUSD);
@@ -60,6 +60,27 @@ class FundraisingExamplesTest {
                                                                  thirdEvent -> assertThat(thirdEvent).isInstanceOf(
                                                                      FundraisingEvent.InvestmentMade.class),
                                                                  fourthEvent -> assertThat(fourthEvent).isInstanceOf(
-                                                                     FundraisingEvent.ProjectIsFunded.class));
+                                                                     FundraisingEvent.ProjectFunded.class));
+    }
+
+    // @formatter:off
+    @DisplayName(
+        """
+         given project has been funded,
+         then funds are released to the borrower
+        """
+    )
+    // @formatter:on
+    @Test
+    void releaseFundsTest() {
+        // given
+        var projectFunded = new FundraisingEvent.ProjectFunded(Personas.borrowerNamed("George"));
+        var fundsReleaser = new FundsReleaser();
+
+        // when
+        var fundsReleased = fundsReleaser.when(projectFunded);
+
+        // then
+        assertThat(fundsReleased.toBorrower()).isEqualTo(projectFunded.borrower());
     }
 }

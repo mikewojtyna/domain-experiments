@@ -16,7 +16,7 @@ public class Borrower {
     @NonNull
     BorrowerId id;
 
-    Borrower(@NonNull BorrowerId id,
+    public Borrower(@NonNull BorrowerId id,
              @NonNull LocalDate birthDate,
              @NonNull LocalDate now) throws IllegalArgumentException {
         var years = Period.between(birthDate, now).getYears();
